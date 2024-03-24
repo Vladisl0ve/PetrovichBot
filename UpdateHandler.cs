@@ -1,5 +1,7 @@
-﻿using PetrovichBot.Services.Interfaces;
-using PetrovichBot.UpdateControllers;
+﻿using PetrovichBot.Controllers;
+using PetrovichBot.Controllers.UpdateControllers;
+using PetrovichBot.Database;
+using PetrovichBot.Services.Interfaces;
 using Serilog;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
@@ -11,9 +13,12 @@ namespace PetrovichBot
     public class UpdateHandler : IUpdateHandler
     {
         private readonly IApplicationServices _appServices;
-        public UpdateHandler(IApplicationServices applicationServices) 
+        private readonly IEnvsSettings _envs;
+
+        public UpdateHandler(IApplicationServices applicationServices, IEnvsSettings envsSettings) 
         {
             _appServices = applicationServices;
+            _envs = envsSettings;
         }
 
         public async Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
@@ -39,7 +44,7 @@ namespace PetrovichBot
             switch (update.Type)
             {
                 case Telegram.Bot.Types.Enums.UpdateType.Message:
-                    new MessageUpdateController(_appServices, update.Message);
+                    new MessageUpdateController(_appServices, _envs, update.Message).ProcessMessage();
                     break;
                 case Telegram.Bot.Types.Enums.UpdateType.InlineQuery:
                     break;

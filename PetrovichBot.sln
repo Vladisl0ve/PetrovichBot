@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34714.143
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PetrovichBot", "PetrovichBot.csproj", "{61A52142-C2B0-4BC3-AC55-9DD304FB3073}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PetrovichBot", "PetrovichBot.csproj", "{61A52142-C2B0-4BC3-AC55-9DD304FB3073}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,6 +20,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
+		RESX_NeutralResourcesLanguage = ru-RU
 		SolutionGuid = {631FFE7A-5EBA-4C3C-A842-CE8D7FB24738}
 	EndGlobalSection
 EndGlobal

@@ -1,40 +1,36 @@
-﻿using PetrovichBot.Services.Interfaces;
+﻿using PetrovichBot.Database;
+using PetrovichBot.Extensions.Consts;
+using PetrovichBot.Services;
+using PetrovichBot.Services.Interfaces;
 using Serilog;
 using Telegram.Bot.Types;
 
-namespace PetrovichBot.UpdateControllers
+namespace PetrovichBot.Controllers.UpdateControllers
 {
     internal class MessageUpdateController : UpdateController
     {
-        public MessageUpdateController(IApplicationServices applicationServices, Message message) : base (applicationServices)
+        private readonly Message _message;
+
+        public MessageUpdateController(IApplicationServices applicationServices, IEnvsSettings envsSettings, Message message) : base(applicationServices, envsSettings)
         {
-            if (message.Chat.Id > 0)
-                new PrivateMessageUpdateController(applicationServices, message).ProcessCommand();
+            _message = message;
+        }
+
+        internal void ProcessMessage()
+        {
+            if (_message.Chat.Id > 0)
+                new PrivateMessageUpdateController(_appServices, _message).ProcessCommand();
             else
-                new PublicMessageUpdateController(applicationServices, message).ProcessCommand();
+                new PublicMessageUpdateController(_appServices, _message).ProcessCommand();
+
+            new SetCommandController(_appServices, _envs, _message.From.Id, _message.Chat.Id).UpdateCommands();
         }
 
         protected class PrivateMessageUpdateController(IApplicationServices applicationServices, Message message) : BasicMessageUpdateController(applicationServices, message)
         {
-            public override async Task<string> ProcessText(long chatId, string msgText)
-            {
-                var textToSend = await base.ProcessText(chatId, msgText);
-                Log.Debug($"Processed private text message from {chatId}");
-                await _appServices.BotControlService.SendTextMessageAsync(chatId, textToSend, _message.MessageThreadId, toLog: false);
-
-                return textToSend;
-            }
         }
         protected class PublicMessageUpdateController(IApplicationServices applicationServices, Message message) : BasicMessageUpdateController(applicationServices, message)
         {
-            public override async Task<string> ProcessText(long chatId, string msgText)
-            {
-                var textToSend = await base.ProcessText(chatId, msgText);
-                Log.Debug($"Processed public text message from {chatId}");
-                await _appServices.BotControlService.SendTextMessageAsync(chatId, textToSend, _message.MessageThreadId, toLog: false);
-
-                return textToSend;
-            }
         }
         protected class BasicMessageUpdateController
         {
@@ -50,7 +46,7 @@ namespace PetrovichBot.UpdateControllers
                 switch (_message.Type)
                 {
                     case Telegram.Bot.Types.Enums.MessageType.Text:
-                        await ProcessText(_message.Chat.Id, _message.Text);
+                        ProcessText(_message.Chat.Id, _message.Text);
                         break;
                     case Telegram.Bot.Types.Enums.MessageType.Photo:
                         break;
@@ -141,16 +137,50 @@ namespace PetrovichBot.UpdateControllers
                     case Telegram.Bot.Types.Enums.MessageType.ChatShared:
                         break;
 
-
                     case Telegram.Bot.Types.Enums.MessageType.Unknown:
                     default:
                         break;
                 }
+            }
+            public virtual async void ProcessText(long chatId, string rawMsgText)
+            {
+                string msgText = rawMsgText.ToLower().Replace(Delimeters.BotCommandDelimeter, "");
+
+                if (Commands.RandomJokeCommand == msgText)
+                {
+                    await SendRandomJoke();
+                }
+                else if (Commands.TopJokeCommand == msgText)
+                {
+                    await SendTopJoke();
+                }
+            }
+
+            public virtual async Task<string?> SendTopJoke()
+            {
+                var textToSend = await _appServices.HttpService.GetTopJoke();
+                if (textToSend == default)
+                {
+                    Log.Fatal($"Error on getting TOP joke: [ID: {_message.Chat.Id}| {_message.Text}]");
+                    return default;
+                }
+                Log.Debug($"Processed getting TOP joke for {_message.Chat.Id}");
+                await _appServices.BotControlService.SendTextMessageAsync(_message.Chat.Id, textToSend, _message.MessageThreadId, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, toLog: false);
+                return textToSend;
 
             }
-            public virtual async Task<string> ProcessText(long chatId, string msgText)
+            public virtual async Task<string?> SendRandomJoke()
             {
-                return "Hello world!";
+                var textToSend = await _appServices.HttpService.GetRandomJoke();
+                if (textToSend == default)
+                {
+                    Log.Fatal($"Error on getting random joke: [ID: {_message.Chat.Id}| {_message.Text}]");
+                    return default;
+                }
+                Log.Debug($"Processed getting random joke for {_message.Chat.Id}");
+                await _appServices.BotControlService.SendTextMessageAsync(_message.Chat.Id, textToSend, _message.MessageThreadId, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, toLog: false);
+                return textToSend;
+
             }
         }
     }

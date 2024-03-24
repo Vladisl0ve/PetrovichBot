@@ -1,4 +1,5 @@
 ﻿using PetrovichBot.Database;
+using PetrovichBot.Extensions;
 using Serilog;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
@@ -162,5 +163,21 @@ namespace PetrovichBot.Services
                 Log.Error($"{ex.Message}");
             }
         }
+        public async Task SetMyCommandsAsync(IEnumerable<BotCommand> commands, BotCommandScope scope = default, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var currentCommands = await _botClient.GetMyCommandsAsync(scope: scope, cancellationToken: cancellationToken);
+                if (!currentCommands.IsEqual(commands.ToArray()))
+                    await _botClient.SetMyCommandsAsync(commands,
+                                                        scope: scope,
+                                                        cancellationToken: cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"MSG: {ex.Message}, InnerExeption: {ex.InnerException?.Message}");
+            }
+        }
+
     }
 }

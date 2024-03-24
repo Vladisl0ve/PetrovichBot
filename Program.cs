@@ -7,7 +7,6 @@ using PetrovichBot.Database;
 using PetrovichBot.Extensions;
 using PetrovichBot.Services;
 using PetrovichBot.Services.Interfaces;
-using PetrovichBot.UpdateControllers;
 using Serilog;
 using Serilog.Events;
 using Telegram.Bot;
@@ -61,6 +60,7 @@ namespace PetrovichBot
 
                       //Services
                       services.AddSingleton<BotControlService>();
+                      services.AddSingleton<HttpService>();
 
                       services.AddLocalization(options => options.ResourcesPath = "Resources");
                   });
