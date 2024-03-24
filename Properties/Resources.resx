@@ -101,9 +101,21 @@
     <value>Случайный анекдот 🍌</value>
   </data>
   <data name="TopJokeButton" xml:space="preserve">
-    <value>Случайный лучший 🏆</value>
+    <value>Лучший анекдот🏆</value>
   </data>
   <data name="TopJokeHeader" xml:space="preserve">
     <value>&lt;b&gt;ТОП 30 ({0}/30)&lt;/b&gt;</value>
+  </data>
+  <data name="StartMessage" xml:space="preserve">
+    <value>Анекдоты от Петровича - самые лучшие!</value>
+  </data>
+  <data name="TopBezdnaButton" xml:space="preserve">
+    <value>Лучшее из Бездны 🥇</value>
+  </data>
+  <data name="RandomBezdnaButton" xml:space="preserve">
+    <value>Случайное из Бездны 🎲</value>
+  </data>
+  <data name="RandomBezdnaHeader" xml:space="preserve">
+    <value>&lt;b&gt;Случайное из Бездны #{0}&lt;/b&gt;</value>
   </data>
 </root>

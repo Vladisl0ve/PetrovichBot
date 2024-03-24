@@ -1,8 +1,11 @@
 ﻿using PetrovichBot.Database;
+using PetrovichBot.Extensions;
 using PetrovichBot.Extensions.Consts;
+using PetrovichBot.Properties;
 using PetrovichBot.Services;
 using PetrovichBot.Services.Interfaces;
 using Serilog;
+using System.Globalization;
 using Telegram.Bot.Types;
 
 namespace PetrovichBot.Controllers.UpdateControllers
@@ -28,6 +31,54 @@ namespace PetrovichBot.Controllers.UpdateControllers
 
         protected class PrivateMessageUpdateController(IApplicationServices applicationServices, Message message) : BasicMessageUpdateController(applicationServices, message)
         {
+            public override async Task<string?> SendTopJoke()
+            {
+                var textToSend = await _appServices.HttpService.GetTopJoke();
+                if (textToSend == default)
+                {
+                    Log.Fatal($"Error on getting (private) TOP joke: [ID: {Message.Chat.Id}| {Message.Text}]");
+                    return default;
+                }
+                Log.Debug($"Processed getting (private) TOP joke for {Message.Chat.Id}");
+                await _appServices.BotControlService.SendTextMessageAsync(Message.Chat.Id,
+                                                                          textToSend,
+                                                                          Message.MessageThreadId,
+                                                                          inlineMarkup: ExtensionMethods.MenuKeyboardMarkup(UserCulture),
+                                                                          parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                                                                          toLog: false);
+                return textToSend;
+            }
+
+            public override async Task<string?> SendRandomJoke()
+            {
+                var textToSend = await _appServices.HttpService.GetRandomJoke();
+                if (textToSend == default)
+                {
+                    Log.Fatal($"Error on getting random joke: [ID: {Message.Chat.Id}| {Message.Text}]");
+                    return default;
+                }
+                Log.Debug($"Processed getting random joke for {Message.Chat.Id}");
+                await _appServices.BotControlService.SendTextMessageAsync(Message.Chat.Id,
+                                                                          textToSend,
+                                                                          Message.MessageThreadId,
+                                                                          inlineMarkup: ExtensionMethods.MenuKeyboardMarkup(UserCulture),
+                                                                          parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                                                                          toLog: false);
+                return textToSend;
+            }
+
+            public override async Task SendStartMessage()
+            {
+                var textToSend = nameof(Resources.StartMessage).UseCulture(UserCulture);
+
+                Log.Debug($"Processed START MSG (private) for {Message.Chat.Id}");
+                await _appServices.BotControlService.SendTextMessageAsync(Message.Chat.Id,
+                                                                          textToSend,
+                                                                          Message.MessageThreadId,
+                                                                          inlineMarkup: ExtensionMethods.MenuKeyboardMarkup(UserCulture),
+                                                                          parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                                                                          toLog: false);
+            }
         }
         protected class PublicMessageUpdateController(IApplicationServices applicationServices, Message message) : BasicMessageUpdateController(applicationServices, message)
         {
@@ -35,18 +86,22 @@ namespace PetrovichBot.Controllers.UpdateControllers
         protected class BasicMessageUpdateController
         {
             public readonly IApplicationServices _appServices;
-            public readonly Message _message;
+            public readonly Message Message;
+            public readonly CultureInfo UserCulture;
+
             public BasicMessageUpdateController(IApplicationServices applicationServices, Message message)
             {
                 _appServices = applicationServices;
-                _message = message;
+                Message = message;
+
+                UserCulture = new CultureInfo("ru");
             }
             public async void ProcessCommand()
             {
-                switch (_message.Type)
+                switch (Message.Type)
                 {
                     case Telegram.Bot.Types.Enums.MessageType.Text:
-                        ProcessText(_message.Chat.Id, _message.Text);
+                        ProcessText(Message.Chat.Id, Message.Text);
                         break;
                     case Telegram.Bot.Types.Enums.MessageType.Photo:
                         break;
@@ -144,43 +199,81 @@ namespace PetrovichBot.Controllers.UpdateControllers
             }
             public virtual async void ProcessText(long chatId, string rawMsgText)
             {
+                if (string.IsNullOrEmpty(rawMsgText))
+                    return;
+
                 string msgText = rawMsgText.ToLower().Replace(Delimeters.BotCommandDelimeter, "");
 
-                if (Commands.RandomJokeCommand == msgText)
+                if (Commands.RandomJokeCommand == msgText || nameof(Resources.RandomJokeButton).UseCulture(UserCulture) == rawMsgText)
                 {
                     await SendRandomJoke();
                 }
-                else if (Commands.TopJokeCommand == msgText)
+                else if (Commands.TopJokeCommand == msgText || nameof(Resources.TopJokeButton).UseCulture(UserCulture) == rawMsgText)
                 {
                     await SendTopJoke();
                 }
+                else if (Commands.RandomBezdnaCommand == msgText || nameof(Resources.RandomBezdnaButton).UseCulture(UserCulture) == rawMsgText)
+                {
+                    await SendRandomBezdna();
+                }
+                else if (msgText.Contains(Commands.StartCommand))
+                {
+                    await SendStartMessage();
+                }
             }
 
-            public virtual async Task<string?> SendTopJoke()
+            public virtual async Task SendStartMessage()
+            {
+                var textToSend = nameof(Resources.StartMessage).UseCulture(UserCulture);
+
+                Log.Debug($"Processed START MSG for {Message.Chat.Id}");
+                await _appServices.BotControlService.SendTextMessageAsync(Message.Chat.Id,
+                                                                          textToSend,
+                                                                          Message.MessageThreadId,
+                                                                          parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                                                                          toLog: false);
+            }
+
+            public virtual async Task SendTopJoke()
             {
                 var textToSend = await _appServices.HttpService.GetTopJoke();
                 if (textToSend == default)
                 {
-                    Log.Fatal($"Error on getting TOP joke: [ID: {_message.Chat.Id}| {_message.Text}]");
-                    return default;
+                    Log.Fatal($"Error on getting TOP joke: [ID: {Message.Chat.Id}| {Message.Text}]");
+                    return;
                 }
-                Log.Debug($"Processed getting TOP joke for {_message.Chat.Id}");
-                await _appServices.BotControlService.SendTextMessageAsync(_message.Chat.Id, textToSend, _message.MessageThreadId, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, toLog: false);
-                return textToSend;
-
+                Log.Debug($"Processed getting TOP joke for {Message.Chat.Id}");
+                await _appServices.BotControlService.SendTextMessageAsync(Message.Chat.Id,
+                                                                          textToSend,
+                                                                          Message.MessageThreadId,
+                                                                          parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                                                                          toLog: false);
             }
+
             public virtual async Task<string?> SendRandomJoke()
             {
                 var textToSend = await _appServices.HttpService.GetRandomJoke();
                 if (textToSend == default)
                 {
-                    Log.Fatal($"Error on getting random joke: [ID: {_message.Chat.Id}| {_message.Text}]");
+                    Log.Fatal($"Error on getting random joke: [ID: {Message.Chat.Id}| {Message.Text}]");
                     return default;
                 }
-                Log.Debug($"Processed getting random joke for {_message.Chat.Id}");
-                await _appServices.BotControlService.SendTextMessageAsync(_message.Chat.Id, textToSend, _message.MessageThreadId, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, toLog: false);
+                Log.Debug($"Processed getting random joke for {Message.Chat.Id}");
+                await _appServices.BotControlService.SendTextMessageAsync(Message.Chat.Id, textToSend, Message.MessageThreadId, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, toLog: false);
                 return textToSend;
+            }
 
+            public virtual async Task<string?> SendRandomBezdna()
+            {
+                var textToSend = await _appServices.HttpService.GetRandomBezdna();
+                if (textToSend == default)
+                {
+                    Log.Fatal($"Error on getting random bezdna: [ID: {Message.Chat.Id}| {Message.Text}]");
+                    return default;
+                }
+                Log.Debug($"Processed getting random bezdna for {Message.Chat.Id}");
+                await _appServices.BotControlService.SendTextMessageAsync(Message.Chat.Id, textToSend, Message.MessageThreadId, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, toLog: false);
+                return textToSend;
             }
         }
     }

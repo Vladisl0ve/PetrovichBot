@@ -61,6 +61,24 @@ namespace PetrovichBot.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Случайное из Бездны 🎲.
+        /// </summary>
+        internal static string RandomBezdnaButton {
+            get {
+                return ResourceManager.GetString("RandomBezdnaButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;b&gt;Случайное из Бездны #{0}&lt;/b&gt;.
+        /// </summary>
+        internal static string RandomBezdnaHeader {
+            get {
+                return ResourceManager.GetString("RandomBezdnaHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Случайный анекдот 🍌.
         /// </summary>
         internal static string RandomJokeButton {
@@ -70,7 +88,25 @@ namespace PetrovichBot.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Случайный лучший 🏆.
+        ///   Looks up a localized string similar to Анекдоты от Петровича - самые лучшие!.
+        /// </summary>
+        internal static string StartMessage {
+            get {
+                return ResourceManager.GetString("StartMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Лучшее из Бездны 🥇.
+        /// </summary>
+        internal static string TopBezdnaButton {
+            get {
+                return ResourceManager.GetString("TopBezdnaButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Лучший анекдот🏆.
         /// </summary>
         internal static string TopJokeButton {
             get {

@@ -3,6 +3,7 @@ using PetrovichBot.Database;
 using PetrovichBot.Extensions;
 using PetrovichBot.Properties;
 using Serilog;
+using System.Web;
 
 namespace PetrovichBot.Services
 {
@@ -35,6 +36,31 @@ namespace PetrovichBot.Services
             catch (Exception ex)
             {
                 Log.Error(ex, $"[{nameof(GetTopJoke)}]");
+                result = default;
+            }
+
+            return result;
+        }
+        public async Task<string?> GetRandomBezdna()
+        {
+            string apiUrl = $"https://bezdna.su/random.php";
+            string? result = "";
+            try
+            {
+                HtmlWeb web = new HtmlWeb();
+                var htmlDoc = await web.LoadFromWebAsync(apiUrl);
+
+                if (htmlDoc == null)
+                {
+                    Log.Warning($"Error on downloading random bezdna");
+                    return default;
+                }
+                result = GetFromBezdnaRandJokeResponse(htmlDoc);
+                //Log.Information($"Success Random Joke: {result}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, $"[{nameof(GetRandomJoke)}]");
                 result = default;
             }
 
@@ -77,12 +103,46 @@ namespace PetrovichBot.Services
         }
         private static string GetJokeFromBaneksRandJokeResponse(HtmlDocument docWithJoke)
         {
-            string jokeText = docWithJoke.DocumentNode.SelectSingleNode("//body").SelectSingleNode("//p").InnerHtml.Replace("<br>", $"");
-            string titleText = docWithJoke.DocumentNode.SelectSingleNode("//body").SelectSingleNode("//h2").InnerHtml.Replace("<br>", $"");
+            string jokeText = docWithJoke.DocumentNode.SelectSingleNode("//body").SelectSingleNode("//p").InnerHtml.Replace("<br>", $"{Environment.NewLine}");
+            string titleText = docWithJoke.DocumentNode.SelectSingleNode("//body").SelectSingleNode("//h2").InnerHtml.Replace("<br>", $"{Environment.NewLine}");
 
             string result = $"<b>{titleText}</b>{Environment.NewLine}{Environment.NewLine}" +
                             $"{jokeText}";
 
+            return result;
+        }
+        private static string? GetFromBezdnaRandJokeResponse(HtmlDocument docWithJoke)
+        {
+            var quotesCollection = docWithJoke.DocumentNode.SelectNodes("//div[@class='q']"); //[contains(@style,'border-bottom: none')]
+            if (quotesCollection.Count == 0)
+                return default;
+
+            (int maxRating, int indexBestQuote, int bestQuoteID) = (0, 0, 0);
+            for (int i = 0; i < quotesCollection.Count; i++)
+            {
+                var tmp = quotesCollection[i]
+                    .SelectSingleNode("//div[@class='vote']")
+                    .SelectSingleNode("//div[@style='float: left; border: none; padding: 0px; background: none;']")
+                    .InnerText; //InnerText = "[ +\n82\n- ]\n\n Комментировать цитату №42757\n"
+
+                string? quoteRatingString = tmp.GetStringBetweenTwoStrings("[ +\n", "\n- ]");
+                if (int.TryParse(quoteRatingString, out int quoteRating) && quoteRating > maxRating
+                    && int.TryParse(tmp.GetStringBetweenTwoStrings("№", "\n"), out int quoteID))
+                {
+                    maxRating = quoteRating;
+                    indexBestQuote = i;
+                    bestQuoteID = quoteID;
+                }
+            }
+
+            var quoteText = HttpUtility.HtmlDecode(quotesCollection[indexBestQuote]
+                    .SelectSingleNode("//div[@style='border-bottom: none;']")
+                    .InnerHtml)
+                .Replace("<br>", $"{Environment.NewLine}");
+
+            var quoteHeader = string.Format(nameof(Resources.RandomBezdnaHeader).UseCulture("ru"), bestQuoteID) + Environment.NewLine + Environment.NewLine;
+            
+            var result = quoteHeader + quoteText;
             return result;
         }
 

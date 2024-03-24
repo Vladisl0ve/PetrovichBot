@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace PetrovichBot.Extensions
 {
@@ -59,6 +60,41 @@ namespace PetrovichBot.Extensions
 
             return Resources.ResourceManager.GetString(toTranslate, culture);
         }
+        public static ReplyKeyboardMarkup MenuKeyboardMarkup(CultureInfo culture) => _menuKeyboardMarkup(culture);
+        private static ReplyKeyboardMarkup _menuKeyboardMarkup(CultureInfo culture) =>
+                new ReplyKeyboardMarkup(
+                    new List<List<KeyboardButton>>()
+                    {
+                        new List<KeyboardButton>
+                        {
+                            new KeyboardButton(nameof(Resources.RandomJokeButton).UseCulture(culture)),
+                            new KeyboardButton(nameof(Resources.RandomBezdnaButton).UseCulture(culture)),
+                        },
+                        new List<KeyboardButton>
+                        {
+                            new KeyboardButton(nameof(Resources.TopJokeButton).UseCulture(culture)),
+                            new KeyboardButton(nameof(Resources.TopBezdnaButton).UseCulture(culture)),
+                        }
+                    }
+                    )
+                { 
+                    ResizeKeyboard = true
+                };
 
+        public static string? GetStringBetweenTwoStrings(this string text, string startDelimeter, string finishDelimeter)
+        {
+            try
+            {
+                int pFrom = text.IndexOf(startDelimeter) + startDelimeter.Length;
+                int pTo = text.LastIndexOf(finishDelimeter);
+
+                return text[pFrom..pTo];
+            }
+            catch(Exception ex)
+            {
+                Log.Error(ex, nameof(GetStringBetweenTwoStrings));
+                return default;
+            }
+        }
     }
 }
