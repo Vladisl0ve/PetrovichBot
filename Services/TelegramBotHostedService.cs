@@ -10,7 +10,7 @@ namespace PetrovichBot.Services
     {
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var botName = await telegramBotClient.GetMyNameAsync(cancellationToken: stoppingToken);
+            var botName = (await telegramBotClient.GetMyNameAsync(cancellationToken: stoppingToken)).Name;
 #if DEBUG
             Log.Information($"DEBUG: Telegram Bot {botName} started");
 #else

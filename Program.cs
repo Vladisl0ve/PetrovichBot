@@ -58,7 +58,6 @@ namespace PetrovichBot
                       services.Configure<EnvsSettings>(context.Configuration.GetSection(nameof(EnvsSettings)));
                       services.AddTransient<IEnvsSettings>(sp => sp.GetRequiredService<IOptions<EnvsSettings>>().Value);
 
-
                       services.AddLocalization(options => options.ResourcesPath = "Resources");
                   });
 
